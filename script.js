@@ -1,5 +1,5 @@
 const SUPPORTED_STOCKS = ['GOOG', 'TSLA', 'AMZN', 'META', 'NVDA'];
-const SERVER_URL = 'http://localhost:3000';
+const SERVER_URL = window.location.origin;
 
 class StockDashboard {
     constructor() {
@@ -195,11 +195,14 @@ class StockDashboard {
     }
 
     async initWebSocket() {
-        this.ws = new WebSocket('ws://localhost:3000/ws');
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    this.ws = new WebSocket(wsUrl);
 
-        this.ws.onopen = () => {
-            console.log('WebSocket connected');
-        };
+    this.ws.onopen = () => {
+        console.log('WebSocket connected to:', wsUrl);
+    };
 
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
@@ -480,4 +483,5 @@ class StockDashboard {
 }
 
 // Initialize dashboard when page loads
+
 const dashboard = new StockDashboard();
