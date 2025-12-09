@@ -4,11 +4,16 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
+
+// Serve React app (if you add it later)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // In-memory data store
 let users = new Map();
@@ -76,24 +81,53 @@ app.post('/unsubscribe', (req, res) => {
     res.json({ success: true });
 });
 
+// Health check endpoint (required for Render)
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        service: 'Stock Broker Dashboard'
+    });
+});
+
 // Start HTTP server
 const server = app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Dashboard URL: http://localhost:${PORT}`);
 });
 
 // WebSocket server
 const wss = new WebSocket.Server({ server });
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
     console.log('New WebSocket connection');
     
+    // Get client IP
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    console.log(`Client connected from: ${clientIp}`);
+    
     ws.on('message', (message) => {
-        // Handle incoming messages if needed
+        try {
+            const data = JSON.parse(message);
+            // Handle ping/pong for connection keep-alive
+            if (data.type === 'ping') {
+                ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
+            }
+        } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+        }
     });
 
     ws.on('close', () => {
         console.log('WebSocket connection closed');
     });
+
+    // Send initial connection confirmation
+    ws.send(JSON.stringify({ 
+        type: 'connection', 
+        status: 'connected',
+        message: 'Stock dashboard WebSocket connected'
+    }));
 });
 
 // Function to update stock prices
@@ -125,21 +159,43 @@ function updateStockPrices() {
 
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({
-                type: 'stockUpdate',
-                stocks: stockUpdates
-            }));
-            
-            client.send(JSON.stringify({
-                type: 'userUpdate',
-                users: activeUsers
-            }));
+            try {
+                client.send(JSON.stringify({
+                    type: 'stockUpdate',
+                    stocks: stockUpdates
+                }));
+                
+                client.send(JSON.stringify({
+                    type: 'userUpdate',
+                    users: activeUsers
+                }));
+            } catch (error) {
+                console.error('Error sending WebSocket update:', error);
+            }
         }
     });
 }
 
 // Update stock prices every second
-setInterval(updateStockPrices, 1000);
+const updateInterval = setInterval(updateStockPrices, 1000);
 
 // Initial update
 updateStockPrices();
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    clearInterval(updateInterval);
+    
+    // Close all WebSocket connections
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.close();
+        }
+    });
+    
+    server.close(() => {
+        console.log('HTTP server closed');
+        process.exit(0);
+    });
+});
