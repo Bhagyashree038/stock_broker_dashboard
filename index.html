@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockFlow | Broker Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="brand-header">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <span>StockFlow</span>
+                </div>
+                <h1>Welcome Back</h1>
+                <p class="subtitle">Sign in to access your stock portfolio</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" placeholder="you@example.com" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In to Dashboard
+                </button>
+            </form>
+            
+            <div class="demo-section">
+                <p class="demo-title">Demo Accounts</p>
+                <div class="demo-cards">
+                    <div class="demo-card">
+                        <div class="demo-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="demo-info">
+                            <span class="demo-role">Portfolio Manager</span>
+                            <span class="demo-email">trader@stockflow.com</span>
+                        </div>
+                    </div>
+                    <div class="demo-card">
+                        <div class="demo-icon">
+                            <i class="fas fa-user-chart"></i>
+                        </div>
+                        <div class="demo-info">
+                            <span class="demo-role">Investment Analyst</span>
+                            <span class="demo-email">analyst@stockflow.com</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="login-footer">
+                <p>Powered by real-time WebSocket technology</p>
+                <div class="status-indicator">
+                    <span class="status-dot active"></span>
+                    <span>System Online</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboardScreen" class="dashboard-container hidden">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="nav-left">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <span>StockFlow</span>
+                </div>
+                <div class="nav-divider"></div>
+                <div class="user-profile">
+                    <div class="avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name" id="userEmail">Loading...</span>
+                        <span class="user-role">Active Trader</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="nav-right">
+                <div class="nav-item">
+                    <i class="fas fa-clock"></i>
+                    <span id="lastUpdateTime">--:--:--</span>
+                </div>
+                <div class="nav-item status-badge">
+                    <span class="status-dot live"></span>
+                    <span>LIVE</span>
+                </div>
+                <button id="logoutBtn" class="btn-logout" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="dashboard-content">
+            <!-- Left Sidebar - Subscriptions -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-bell"></i>
+                        Stock Subscriptions
+                    </h3>
+                    <div class="subscription-controls">
+                        <div class="input-group compact">
+                            <div class="input-wrapper">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="stockTicker" placeholder="Ticker (e.g., GOOG)" maxlength="4">
+                            </div>
+                            <button id="subscribeBtn" class="btn-subscribe">
+                                <i class="fas fa-plus"></i>
+                                Add
+                            </button>
+                        </div>
+                        <p class="input-hint">Supported: GOOG, TSLA, AMZN, META, NVDA</p>
+                    </div>
+                    
+                    <div class="subscriptions-list" id="subscriptionsList">
+                        <!-- Subscriptions will be added here -->
+                        <div class="empty-subscriptions">
+                            <i class="fas fa-chart-line"></i>
+                            <p>No subscriptions yet</p>
+                            <small>Add stocks to monitor real-time prices</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-users"></i>
+                        Active Traders
+                    </h3>
+                    <div class="active-users" id="activeUsersList">
+                        <!-- Active users will be added here -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Dashboard Area -->
+            <main class="main-content">
+                <div class="content-header">
+                    <h2>Market Overview</h2>
+                    <div class="market-status">
+                        <span id="updateStatus" class="status-indicator">
+                            <i class="fas fa-circle"></i>
+                            Real-time Updates Active
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Stock Cards Grid -->
+                <div class="stocks-grid" id="stocksGrid">
+                    <!-- Stock cards will be dynamically inserted here -->
+                    <div class="empty-dashboard">
+                        <div class="empty-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Welcome to Your Dashboard</h3>
+                        <p>Subscribe to stocks to begin monitoring real-time market data</p>
+                        <button class="btn-primary" onclick="document.getElementById('stockTicker').focus()">
+                            <i class="fas fa-plus"></i>
+                            Add Your First Stock
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Market Statistics -->
+                <div class="market-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Subscriptions</span>
+                            <span class="stat-value" id="totalSubscriptions">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Update Frequency</span>
+                            <span class="stat-value">1s</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Latency</span>
+                            <span class="stat-value">< 50ms</span>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
